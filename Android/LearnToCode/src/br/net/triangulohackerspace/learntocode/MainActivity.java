@@ -1,6 +1,11 @@
 package br.net.triangulohackerspace.learntocode;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.UUID;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
@@ -32,9 +37,17 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
+import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.opengl.GLES20;
+import android.os.Build;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.widget.Toast;
 
 
 public class MainActivity extends SimpleBaseGameActivity implements OnClickListener, IOnMenuItemClickListener{
@@ -62,9 +75,20 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 		ButtonSprite virarDireita;
 		ButtonSprite voltar;
 		ButtonSprite executar;
+		ButtonSprite menu;
 		
-		protected static final int MENU_RESET = 0;
-		protected static final int MENU_QUIT = MENU_RESET + 1;
+		private static final int MENU_BLUETOOTH = 0;
+		protected static final int MENU_RESET = 1;
+		protected static final int MENU_QUIT = 2;
+		
+		private static final int REQUESTCODE_BLUETOOTH_CONNECT = 1;
+		private static final String TAG_BT = "bluetooth1";
+		private BluetoothAdapter btAdapter = null;
+		private BluetoothSocket btSocket = null;
+		private OutputStream outStream = null;
+		private String address;
+		
+		private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 		
 		
 		ArrayList<Acao> acoes;
@@ -100,6 +124,11 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 
 		@Override
 		public void onCreateResources() {
+			
+			btAdapter = BluetoothAdapter.getDefaultAdapter();
+		    checkBTState();
+			
+			
 			FontFactory.setAssetBasePath("font/");
 			
 			final ITexture fontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
@@ -144,7 +173,8 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 			virarDireita = new ButtonSprite((virarEsquerda.getX()+virarEsquerda.getWidth()+10), CAMERA_HEIGHT-(100), this.virarDireitaTextureRegion, this.emFrenteTextureRegion, this.virarDireitaTextureRegion, this.getVertexBufferObjectManager(), this);
 			voltar = new ButtonSprite((this.emFrenteTextureRegion.getWidth()*0.25F), CAMERA_HEIGHT-(50), this.voltarTextureRegion, this.emFrenteTextureRegion, this.virarDireitaTextureRegion, this.getVertexBufferObjectManager(), this);
 			executar = new ButtonSprite((voltar.getX()+voltar.getWidth()+10), CAMERA_HEIGHT-(50), this.executarTextureRegion, this.emFrenteTextureRegion, this.virarDireitaTextureRegion, this.getVertexBufferObjectManager(), this);
-				
+			menu = new ButtonSprite((executar.getX()+executar.getWidth()+10), CAMERA_HEIGHT-(50), this.executarTextureRegion, this.emFrenteTextureRegion, this.virarDireitaTextureRegion, this.getVertexBufferObjectManager(), this);	
+			
 			this.mMainScene.registerTouchArea(emFrente);
 			this.mMainScene.attachChild(emFrente);
 			
@@ -159,6 +189,10 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 			
 			this.mMainScene.registerTouchArea(executar);
 			this.mMainScene.attachChild(executar);
+
+			this.mMainScene.registerTouchArea(menu);
+			this.mMainScene.attachChild(menu);
+
 			
 			this.mMainScene.setTouchAreaBindingOnActionDownEnabled(true);
 
@@ -194,8 +228,15 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 							acoes.remove(acao);
 							mMainScene.detachChild(acao);
 						}
-						else if ((pButtonSprite == (ButtonSprite)mMainScene.getChildByIndex(4))){ //voltar
+					}else if ((pButtonSprite == (ButtonSprite)mMainScene.getChildByIndex(4))){ //executar
 							//TODO: Implementar a execucao
+					} else if ((pButtonSprite == (ButtonSprite)mMainScene.getChildByIndex(5))){ //menu
+						if(mMainScene.hasChildScene()) {
+							/* Remove the menu and reset it. */
+							mMenuScene.back();
+						} else {
+							/* Attach the menu. */
+							mMainScene.setChildScene(mMenuScene, false, true, true);
 						}
 					}
 				}
@@ -222,6 +263,11 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 		@Override
 		public boolean onMenuItemClicked(final MenuScene pMenuScene, final IMenuItem pMenuItem, final float pMenuItemLocalX, final float pMenuItemLocalY) {
 			switch(pMenuItem.getID()) {
+				case MENU_BLUETOOTH: 
+					final Intent intent = new Intent(MainActivity.this, BluetoothListDevicesActivity.class);
+					MainActivity.this.startActivityForResult(intent, REQUESTCODE_BLUETOOTH_CONNECT);
+					this.mMainScene.clearChildScene();
+					return true;
 				case MENU_RESET:
 					/* Restart the animation. */
 					this.mMainScene.reset();
@@ -260,6 +306,10 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 		protected MenuScene createMenuScene() {
 			final MenuScene menuScene = new MenuScene(this.mCamera);
 
+			final IMenuItem bluetoothMenuItem = new ColorMenuItemDecorator(new TextMenuItem(MENU_BLUETOOTH, this.mFont, "Bluetooth", this.getVertexBufferObjectManager()), new Color(1,0,0), new Color(0,0,0));
+			bluetoothMenuItem.setBlendFunction(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+			menuScene.addMenuItem(bluetoothMenuItem);
+			
 			final IMenuItem resetMenuItem = new ColorMenuItemDecorator(new TextMenuItem(MENU_RESET, this.mFont, "RESET", this.getVertexBufferObjectManager()), new Color(1,0,0), new Color(0,0,0));
 			resetMenuItem.setBlendFunction(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 			menuScene.addMenuItem(resetMenuItem);
@@ -275,6 +325,129 @@ public class MainActivity extends SimpleBaseGameActivity implements OnClickListe
 			menuScene.setOnMenuItemClickListener(this);
 			return menuScene;
 		}
+		
+		@Override
+		protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+			 Log.i(TAG_BT, "onActivityResult");
+	         if (requestCode == REQUESTCODE_BLUETOOTH_CONNECT) {
+	        	 Log.i(TAG_BT, "LIST_BLUETOOTH");
+	             if (resultCode == RESULT_OK) {
+	            	 String macAddress = data.getStringExtra("BLUETOOTH_MAC");
+	            	 Log.d(TAG_BT, "Selecionado de volta: "+ macAddress);
+	            	 this.address = macAddress;
+	            	 conectarBTDevice();
+	            	 return;
+//	            	 if(macAddress != null){
+//	            		 if(macAddress != null && !macAddress.equals("Nao ha nenhum conectado")){
+//
+//	            			 Log.d(TAG_BT, "Buscando Dispositivos Bluetooth Pareados");
+//
+//	            			    Set<BluetoothDevice> pairedDevices = btAdapter.getBondedDevices();
+//	            			    Log.d(TAG_BT, "Dispositivos Pareados: "+ pairedDevices.size());
+//	            		        if(pairedDevices.size() > 0)
+//	            		        {
+//	            		            for(BluetoothDevice devi : pairedDevices)
+//	            		            {
+//	            		            	if (devi.getAddress().toString().equals(macAddress)) {
+//	            							this.address = devi.getAddress();
+//	            							conectarBTDevice(); 
+//	            							return;
+//	            						};
+//	            		            }
+//	            		        }         		 
+//	                	 }
+//	            	 } 
+	             }
+	         }
+	     }
+		
+		@SuppressLint("NewApi")
+		private void conectarBTDevice() {
+			
+			if(btSocket != null && btSocket.isConnected())
+				return;
+			
+			Log.d(TAG_BT, "Conectando a: "+address);
+			// Set up a pointer to the remote node using it's address.
+			BluetoothDevice device = btAdapter.getRemoteDevice(address);
+			
+			// Two things are needed to make a connection:
+			//   A MAC address, which we got above.
+			//   A Service ID or UUID.  In this case we are using the
+			//     UUID for SPP.
+			
+			try {
+				btSocket = createBluetoothSocket(device);
+			} catch (IOException e1) {
+				errorExit("Fatal Error", "In onResume() and socket create failed: " + e1.getMessage() + ".");
+			}
+			
+			// Discovery is resource intensive.  Make sure it isn't going on
+			// when you attempt to connect and pass your message.
+			btAdapter.cancelDiscovery();
+			
+			// Establish the connection.  This will block until it connects.
+			Log.d(TAG_BT, "...Connecting...");
+			try {
+				btSocket.connect();
+				Log.d(TAG_BT, "...Connection ok...");
+				Toast.makeText(this, "Bluetooth Conectado", Toast.LENGTH_SHORT).show();
+				
+			} catch (IOException e) {
+				
+				try {
+					btSocket.close();
+					Toast.makeText(this, "Bluetooth NAO Conectado", Toast.LENGTH_LONG).show();
+					
+					Log.d(TAG_BT, "Noo houve conexao com: "+address);
+				} catch (IOException e2) {
+					errorExit("Fatal Error", "In onResume() and unable to close socket during connection failure" + e2.getMessage() + ".");
+				}
+			}
+			
+			// Create a data stream so we can talk to server.
+			Log.d(TAG_BT, "...Create Socket...");
+			
+			try {
+				outStream = btSocket.getOutputStream();
+			} catch (IOException e) {
+				errorExit("Fatal Error", "In onResume() and output stream creation failed:" + e.getMessage() + ".");
+			}
+		}
+		
+		 private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
+		      if(Build.VERSION.SDK_INT >= 10){
+		          try {
+		              final Method  m = device.getClass().getMethod("createInsecureRfcommSocketToServiceRecord", new Class[] { UUID.class });
+		              return (BluetoothSocket) m.invoke(device, MY_UUID);
+		          } catch (Exception e) {
+		              Log.e(TAG_BT, "Could not create Insecure RFComm Connection",e);
+		          }
+		      }
+		      return  device.createRfcommSocketToServiceRecord(MY_UUID);
+		  }
+		
+		 private void checkBTState() {
+			    // Check for Bluetooth support and then check to make sure it is turned on
+			    // Emulator doesn't support Bluetooth and will return null
+			    if(btAdapter==null) { 
+			      errorExit("Fatal Error", "Bluetooth not support");
+			    } else {
+			      if (btAdapter.isEnabled()) {
+			        Log.d(TAG_BT, "...Bluetooth ON...");
+			      } else {
+			        //Prompt user to turn on Bluetooth
+			        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			        startActivityForResult(enableBtIntent, 1);
+			      }
+			    }
+			  }
+			  
+			  private void errorExit(String title, String message){
+			    Toast.makeText(getBaseContext(), title + " - " + message, Toast.LENGTH_LONG).show();
+			    Log.e(TAG_BT,title+" - "+message);
+			    finish();
+			  }
 
 		// ===========================================================
 		// Inner and Anonymous Classes

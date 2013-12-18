@@ -10,6 +10,8 @@
     
     <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
 	<uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+	<uses-permission android:name="android.permission.BLUETOOTH"/>
 
     <application
         android:allowBackup="true"
@@ -25,6 +27,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="br.net.triangulohackerspace.learntocode.BluetoothListDevicesActivity" android:configChanges="orientation" android:theme="@android:style/Theme.Dialog"/>
     </application>
 
 </manifest>
