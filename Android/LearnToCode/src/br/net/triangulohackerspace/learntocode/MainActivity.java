@@ -311,11 +311,11 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							acao.getY());
 					String dados = new String();
 					if (acao.getTipoAcao().equals(TipoAcao.EMFRENTE)) {
-						dados = "gf:"; // go foward
+						dados = "F:"; // go foward
 					} else if (acao.getTipoAcao().equals(TipoAcao.VIRARESQUEDA)) {
-						dados = "tf:"; // turn left
+						dados = "L:"; // turn left
 					} else if (acao.getTipoAcao().equals(TipoAcao.VIRARDIREITA)) {
-						dados = "tr:"; // turn right
+						dados = "R:"; // turn right
 					}
 					
 					if(!sendData(dados))
