@@ -6,14 +6,24 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 public class Acao extends Sprite{
 
-	String tipoAcao;
+	TipoAcao tipoAcao;
 
 	public Acao(float pX, float pY,
 			ITextureRegion mFace1TextureRegion,
-			VertexBufferObjectManager vertexBufferObjectManager, String tipoAcao) {
+			VertexBufferObjectManager vertexBufferObjectManager, TipoAcao tipoAcao) {
 		super(pX, pY, mFace1TextureRegion, vertexBufferObjectManager);
 		this.tipoAcao = tipoAcao;
 		// TODO Auto-generated constructor stub
 	}
+
+	public TipoAcao getTipoAcao() {
+		return tipoAcao;
+	}
+
+	public void setTipoAcao(TipoAcao tipoAcao) {
+		this.tipoAcao = tipoAcao;
+	}
+	
+	
 
 }
