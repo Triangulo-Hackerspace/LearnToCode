@@ -1,8 +1,9 @@
 // Digital
-const uint8_t ENA = 5;
+const uint8_t ENA = 5; //Velocidade do motor A (0-255)
+const uint8_t ENB = 6; //Velocidade do motor B (0-255)
+
 const uint8_t IN1_MAF = 2; // MOTOR A FORWARD
 const uint8_t IN2_MBB = 3; // MOTOR B BACKWARD
-const uint8_t ENB = 6;
 const uint8_t IN3_MAB = 4; // MOTOR A BACKWARD
 const uint8_t IN4_MBF = 7; // MOTOR B FORWARD
 
