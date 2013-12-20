@@ -38,6 +38,7 @@ import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -322,7 +323,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 						break; 
 					
 					try {
-						Thread.sleep(1000);
+						Thread.sleep(3000);
 					} catch (InterruptedException ex) {
 						Thread.currentThread().interrupt();
 					}
@@ -331,13 +332,13 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				mMainScene.detachChild(posicao);
 			}
 
+			@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 			private boolean sendData(String message) {
 				try {
-					if(btSocket == null){
+					if(btSocket == null || !btSocket.isConnected()){
 						throw new IOException();
 					}
 					
-					btSocket.connect();
 					
 					byte[] msgBuffer = message.getBytes();
 					Log.d(TAG_BT, "...Sending data " + message + "...");
