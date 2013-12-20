@@ -33,6 +33,7 @@ import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSourc
 import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
 import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder.TextureAtlasBuilderException;
 import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
@@ -70,6 +71,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private ITextureRegion virarDireitaTextureRegion;
 	private ITextureRegion voltarTextureRegion;
 	private ITextureRegion executarTextureRegion;
+	private TextureRegion menuTextureRegion;
 
 	ButtonSprite emFrente;
 	ButtonSprite virarEsquerda;
@@ -104,6 +106,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 
 	protected Scene mMainScene;
 	protected MenuScene mMenuScene;
+	
 
 	// ===========================================================
 	// Constructors
@@ -156,6 +159,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				.createFromAsset(this.mBitmapTextureAtlas, this, "voltar.png");
 		this.executarTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createFromAsset(this.mBitmapTextureAtlas, this, "executar.png");
+		this.menuTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createFromAsset(this.mBitmapTextureAtlas, this, "menu.png");
 
 		try {
 			this.mBitmapTextureAtlas
@@ -214,7 +219,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				this.emFrenteTextureRegion, this.virarDireitaTextureRegion,
 				this.getVertexBufferObjectManager(), this);
 		menu = new ButtonSprite((executar.getX() + executar.getWidth() + 10),
-				CAMERA_HEIGHT - (50), this.executarTextureRegion,
+				CAMERA_HEIGHT - (50), this.menuTextureRegion,
 				this.emFrenteTextureRegion, this.virarDireitaTextureRegion,
 				this.getVertexBufferObjectManager(), this);
 
